@@ -8,6 +8,7 @@ import { createRefreshToken, signJwtAccessToken, verifyJwt } from "@/utils/auth/
 import { jwtDecode } from 'jwt-decode';
 import  createOAuthCookie  from "@/utils/auth/oAuthCookie";
 import { getUserByEmail, getUserByPhone } from "@/services/AuthService";
+import redis from "../../../../../redis/redis";
 
 // NextAuth 설정
 export const  authOption:NextAuthOptions = NextAuth({
@@ -75,13 +76,8 @@ export const  authOption:NextAuthOptions = NextAuth({
                   const rt_ex = jwtDecode(refreshToken).exp;
                   const exp = new Date(rt_ex * 1000);
 
-                  const newCookie = cookies();
-                  newCookie.set('refreshToken', refreshToken,{
-                      // 쿠키 옵션 
-                      expires: exp, // 쿠키 만료시간(refreshToken 만료시간과 동일)
-                      httpOnly: true,
-                      // secure: true,
-                  })
+                  createRTCookie(refreshToken, exp); // RefreshToken 쿠키생성
+                  redis.set(`refreshToken:mno:${user.result.mno}`, refreshToken, 'EX', rt_ex); // redis에 refreshToken 저장
 
                   const LoginUser = {
                     user: user.result,
@@ -134,7 +130,11 @@ export const  authOption:NextAuthOptions = NextAuth({
           }else{
             // 자체 JWT 발행
             const userResult = await getUserByPhone(phone_number);
-            const mno = userResult?.mno.toString();
+            if(userResult?.social !== 'kakao'){
+              
+              return `/authentication/login?${userResult?.social}`;
+            }
+            const mno = Number(userResult?.mno);
             const accessToken = signJwtAccessToken({mno: mno});
             const refreshToken = createRefreshToken({mno: mno});
             const rt_ex = jwtDecode(refreshToken).exp;
@@ -142,14 +142,9 @@ export const  authOption:NextAuthOptions = NextAuth({
             
             user.accessToken = accessToken;
             user.refreshToken = refreshToken;
-            const newCookie = cookies();
-            newCookie.set('refreshToken', refreshToken,{
-                // 쿠키 옵션 
-                expires: exp, // 쿠키 만료시간(refreshToken 만료시간과 동일)
-                httpOnly: true,
-                // secure: true,
-            });
-      
+            createRTCookie(refreshToken, exp); // RefreshToken 쿠키생성
+            redis.set(`refreshToken:mno:${mno}`, refreshToken, 'EX', rt_ex); // redis에 refreshToken 저장
+
             return true;
           }
         }
@@ -179,7 +174,11 @@ export const  authOption:NextAuthOptions = NextAuth({
           }else{
             // 자체 JWT 발행
             const userResult = await getUserByEmail(profile.response.email);
-            const mno = userResult?.mno.toString();
+            if(userResult?.social !== 'naver'){
+              
+              return `/authentication/login?${userResult?.social}`;
+            }
+            const mno = Number(userResult?.mno);
             
             const accessToken = signJwtAccessToken({mno: mno});
             const refreshToken = createRefreshToken({mno: mno});
@@ -188,13 +187,9 @@ export const  authOption:NextAuthOptions = NextAuth({
             
             user.accessToken = accessToken;
             user.refreshToken = refreshToken;
-            const newCookie = cookies();
-            newCookie.set('refreshToken', refreshToken,{
-                // 쿠키 옵션 
-                expires: exp, // 쿠키 만료시간(refreshToken 만료시간과 동일)
-                httpOnly: true,
-                // secure: true,
-            });
+            createRTCookie(refreshToken, exp); // RefreshToken 쿠키생성
+            redis.set(`refreshToken:mno:${mno}`, refreshToken, 'EX', rt_ex); // redis에 refreshToken 저장
+
             return true;
           }
         }
@@ -248,5 +243,14 @@ function formatPhoneNumber(phoneNumber: string) {
     return formattedNumber;
   }
 
+function createRTCookie(refreshToken:string, exp:Date){
+  const newCookie = cookies();
+    newCookie.set('refreshToken', refreshToken,{
+        // 쿠키 옵션 
+        expires: exp, // 쿠키 만료시간(refreshToken 만료시간과 동일)
+        httpOnly: true,
+        // secure: true,
+    })
+}
 // signIn을 POST 및 GET 메서드로 익스포트
 export {authOption as POST, authOption as GET}
