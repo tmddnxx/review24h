@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 export async function signUp(body:any){
     try {
         const hashedPW = await bcrypt.hash(body.password, 10); // 10 => 해시반복횟수
+        const hashedBID = await bcrypt.hash(body.baminID, 10);
         const hashedBPW = await bcrypt.hash(body.baminPW, 10); // 10 => 해시반복횟수
         const result = await prisma.$transaction(async (prisma) => {
             const user = await prisma.user.create({
@@ -21,7 +22,7 @@ export async function signUp(body:any){
             const baminAccount = await prisma.bamin_account.create({
                 data: {
                     mno: user.mno,
-                    baminID: body.baminID,
+                    baminID: hashedBID,
                     baminPW: hashedBPW,
                 }
             });
