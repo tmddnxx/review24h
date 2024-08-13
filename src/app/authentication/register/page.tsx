@@ -7,11 +7,11 @@ import Logo from "@/app/(DashboardLayout)/layout/shared/logo/Logo";
 import AuthRegister1 from "../auth/AuthRegister1";
 import AuthRegister2 from "../auth/AuthRegister2";
 import AuthRegister3 from "../auth/AuthRegister3";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 export default function Register() {
-  
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     termsAccepted: {
@@ -20,6 +20,7 @@ export default function Register() {
       term3: false,
     },
     email: '',
+    code: '',
     password: '',
     validPassword: '',
     name: '',
@@ -38,6 +39,7 @@ export default function Register() {
     }));
   };
 
+
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setFormData((prevFormData) => ({
@@ -49,8 +51,72 @@ export default function Register() {
     }));
   };
 
-  const handleNext = () => {
-    setStep((prevStep) => prevStep + 1);
+  const handleNext = async () => {
+    switch(step) {
+      case 1:
+        // Step 1 사용자 약관 체크 검증
+        if(!Object.values(formData.termsAccepted).every(value => value)){
+          alert('모든 약관에 동의해야합니다.');
+          return;
+        }
+        // 서버검증
+        const termsRes = await fetch('/api/auth/signUp/valid/step1', {
+          method: 'POST',
+          body: JSON.stringify(formData.termsAccepted),
+        })
+        const termsValid = await termsRes.json();
+        console.log(termsValid.success);
+        if(!termsValid.success){
+          alert(termsValid.message);
+          return;
+        }
+        setStep(2);
+        break;
+      
+      case 2:
+        // Step 2 회원정보에 대한 검증
+        const userRes = await fetch('/api/auth/signUp/valid/step2', {
+          method: 'POST',
+          body: JSON.stringify(formData),
+        });
+        const userValid = await userRes.json();
+        
+        if(!userValid.success){
+          alert(userValid.message);
+          return;
+        }
+        setStep(3);
+        break;
+
+      case 3:
+        // Step 3 배민정보에 대한 검증
+        const baminRes = await fetch('/api/auth/signUp/valid/step3', {
+          method: 'POST',
+          body: JSON.stringify(formData),
+        });
+        const baminValid = await baminRes.json();
+        if(!baminValid.success){
+          alert(baminValid.message);
+          return;
+        }
+
+        // 회원가입 처리
+        const signUpRes = await fetch('/api/auth/signUp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        });
+        const signUpData = await signUpRes.json();
+        if(!signUpRes.ok){
+          alert('오류가 발생했습니다. 다시 시도해주세요');
+        }else{ // 회원가입 성공 시 로그인페이지로 Redirect
+          router.push('/authentication/login'); 
+        }
+        break;
+    }
+    
   };
 
   const handlePrev = () => {
