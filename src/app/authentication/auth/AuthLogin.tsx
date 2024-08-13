@@ -1,5 +1,6 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import { signIn } from 'next-auth/react';
+import { useSearchParams } from "next/navigation";
 import {
   Box,
   Typography,
@@ -8,6 +9,8 @@ import {
   Button,
   Stack,
   Checkbox,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";
@@ -23,6 +26,24 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const searchParams = useSearchParams();
+  const [showAlert, setShowAlert] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+      if (searchParams.has('naver')) {
+          setMessage('네이버로 등록된 회원입니다.');
+          setShowAlert(true);
+      } else if (searchParams.has('kakao')) {
+          setMessage('카카오로 등록된 회원입니다.');
+          setShowAlert(true);
+      }
+      
+  }, [searchParams]);
+
+  const handleClose = () => {
+    setShowAlert(false);
+  };
 
   const handleLogin = async () => {
     
@@ -108,16 +129,41 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         로그인
       </Button>
     </Box>
-    <Box
-     mt={3}
-     pt={3} 
-     borderTop="1px solid #b4b4b4"
-     display="flex"
-     justifyContent="space-evenly"
-     >
-      <Image src="/images/socials/kakao_login_medium_narrow.png" alt={"KakaoLoginBtn"} width={200} height={40} onClick={() => signIn('kakao')} style={{cursor:'pointer'}}/>
-      <Image src="/images/socials/naver_login_btn.png" alt={"NaverLoginBtn"} width={200} height={40} onClick={() => signIn('naver')} style={{cursor:'pointer'}}/>
-    </Box>
+    <Box position="relative" mt={3} pt={3} borderTop="1px solid #b4b4b4">
+            {showAlert && (
+                <Alert 
+                    severity="info" 
+                    onClose={handleClose} 
+                    sx={{
+                        position: 'absolute', 
+                        top: -60, // 이미지 위에 위치하도록 조정
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 1,
+                    }}
+                >
+                    {message}
+                </Alert>
+            )}
+            <Box display="flex" justifyContent="space-evenly">
+                <Image 
+                    src="/images/socials/kakao_login_medium_narrow.png" 
+                    alt="KakaoLoginBtn" 
+                    width={200} 
+                    height={40} 
+                    onClick={() => signIn('kakao')} 
+                    style={{ cursor: 'pointer' }} 
+                />
+                <Image 
+                    src="/images/socials/naver_login_btn.png" 
+                    alt="NaverLoginBtn" 
+                    width={200} 
+                    height={40} 
+                    onClick={() => signIn('naver')} 
+                    style={{ cursor: 'pointer' }} 
+                />
+            </Box>
+        </Box>
     {subtitle}
   </>
   );
