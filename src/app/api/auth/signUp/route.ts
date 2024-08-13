@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { signUp } from "@/services/AuthService";
 import { cookies } from "next/headers";
 import CryptoJS from "crypto-js";
-import { error } from "console";
 
 export async function POST(req: NextRequest){
     const body = await req.json();
@@ -11,8 +10,11 @@ export async function POST(req: NextRequest){
     // 검증하는 메소드 
 
     const cookie = cookies().get('oauth');
-    const decryptCookie = CryptoJS.AES.decrypt(cookie?.value, process.env.OAUTH_SECRET).toString(CryptoJS.enc.Utf8)
-    const oauth = JSON.parse(decryptCookie);
+    let oauth
+    if(cookie){
+        const decryptCookie = CryptoJS.AES.decrypt(cookie?.value, process.env.OAUTH_SECRET).toString(CryptoJS.enc.Utf8)
+        oauth = JSON.parse(decryptCookie);
+    }
 
     if(oauth){ // 소셜이면 비밀번호 재설정
         body.email = oauth.email;
@@ -21,6 +23,8 @@ export async function POST(req: NextRequest){
         body.phone = oauth.phone;
         body.social = oauth.social;
     }
+
+    
     console.log("body ? ? ",body);
     try{
         const result = await signUp(body);
