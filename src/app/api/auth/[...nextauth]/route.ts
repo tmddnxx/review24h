@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 import { createRefreshToken, signJwtAccessToken, verifyJwt } from "@/utils/auth/jwt";
 import { jwtDecode } from 'jwt-decode';
 import  createOAuthCookie  from "@/utils/auth/oAuthCookie";
-import { getUserByEmail, getUserByPhone } from "@/services/AuthService";
+import { getUserByEmail, getUserByPhone, getUserBySocialID, updateUserByMno } from "@/services/AuthService";
 import redis from "../../../../../redis/redis";
 
 // NextAuth 설정
@@ -108,32 +108,64 @@ export const  authOption:NextAuthOptions = NextAuth({
           console.log("kakao로 로그인");
           // 회원확인
           const phone_number = formatPhoneNumber(profile.kakao_account.phone_number);
-          const userResult = await getUserByPhone(phone_number);
-          // 회원가입 실행
-          if(userResult === null){ 
-            console.log("회원가입 필요");
-            const requestBody = {
-              email: profile.kakao_account.email,
-              phone: phone_number,
-              name: profile.kakao_account.name,
-              social: 'kakao',
-            }
-            try{
-              // 쿠키생성
-              createOAuthCookie(requestBody);
+          const userPhoneResult = await getUserByPhone(phone_number);  // 이게 null이면 회원가입을 안했거나, 정보가 변경되었거나+
+          const userResult = await getUserBySocialID('kakao',user.id); // 이게 null이면 회원가입을 안했거나, 일반유저이거나 
+          console.log("userResult ? : ", userResult);
+          
+          if(userResult === null){
 
-              return '/authentication/register?provider'; // 회원가입 페이지로 Redirect
-
-            }catch (error){
-              console.log(error);
-            }
-          }else{
-            // 자체 JWT 발행
-            const userResult = await getUserByPhone(phone_number);
-            if(userResult?.social !== 'kakao'){
+            if(userPhoneResult === null){
+              // 회원가입 실행
+              const requestBody = {
+                email: profile.kakao_account.email,
+                phone: phone_number,
+                name: profile.kakao_account.name,
+                provider: 'kakao',
+                socialID: user.id,
+              }
+  
+              try{
+                // 쿠키생성
+                createOAuthCookie(requestBody);
+  
+                return '/authentication/register?provider'; // 회원가입 페이지로 Redirect
+  
+              }catch (error){
+                console.log(error);
+              }
+            }else{ // 일반유저인데 첫 연동 시도 -> 로그인
               
-              return `/authentication/login?${userResult?.social}`;
+              return `/authentication/login?social=kakao&social_id=${user.id}&mno=${userPhoneResult.mno}`; // 로그인 페이지로 redirect 연동 후 로그인 처리
             }
+            
+          }else{ // 카카오 회원이거나 카카오 연동을 한 일반회원
+            // 카카오 로그인 실행
+            // 자체 JWT 발행
+            const userResult = await getUserBySocialID('kakao',user.id);
+            const kakaoEmail = profile.kakao_account.email;
+            const kakaoName = profile.kakao_account.name;
+            const kakaoPhone = phone_number;
+            
+            const requestBody = {
+              mno: userResult?.mno,
+              email: kakaoEmail,
+              name: kakaoName,
+              phone: kakaoPhone,
+            }
+            if(userResult?.provider === 'naver'){ // 네이버 회원가입한 사람은 네이버로 로그인시키기
+              
+              return `/authentication/login?provider=${userResult?.provider}`;
+            }
+
+            if(userResult?.provider !== 'credentials'){ // 소셜가입자만 정보변경
+              if(userResult?.social?.kakao_Id === user.id && (userResult.email !== kakaoEmail || userResult?.name !== kakaoName || userResult?.phone !== kakaoPhone)){ // 카카오로 회원가입하고 카카오로 로그인요청
+                // 카카오에서 정보 변경한 경우 DB 업데이트 진행 후 로그인
+                console.log("카카오에서 정보변경함");
+                updateUserByMno(requestBody); // 정보수정
+              }
+            }
+            
+
             const mno = Number(userResult?.mno);
             const accessToken = signJwtAccessToken({mno: mno});
             const refreshToken = createRefreshToken({mno: mno});
@@ -152,34 +184,63 @@ export const  authOption:NextAuthOptions = NextAuth({
         // 네이버 로그인
         else if(account?.provider === 'naver'){
           console.log("naver로 로그인");
-          console.log("$$$ profile ? ", profile);
           // 회원확인
-          const userResult = await getUserByEmail(profile.response.email);
+          const userPhoneResult = await getUserByPhone(profile.response.mobile);
+          const userResult = await getUserBySocialID('naver', user.id);
           
           // 회원가입 실행
           if(userResult === null){
-            const requestBody = {
-              email: profile.response.email,
-              phone: profile.response.mobile,
-              name: profile.response.name,
-              social: 'naver',
-            }
-            try{
-              createOAuthCookie(requestBody);
 
-              return '/authentication/register?provider';
-            }catch(error){
-              console.log(error);
+            if(userPhoneResult === null){
+              // 회원가입 실행
+              const requestBody = {
+                email: profile.response.email,
+                phone: profile.response.mobile,
+                name: profile.response.name,
+                provider: 'naver',
+                socialID: user.id,
+              }
+              try{
+                createOAuthCookie(requestBody);
+  
+                return '/authentication/register?provider'; // 회원가입 페이지로 Redirect
+              }catch(error){
+                console.log(error);
+              }
+            }else{ // 일반유저인덴 첫 연동시도 -> 로그인
+
+              return `/authentication/login?social=naver&social_id=${user.id}&mno=${userPhoneResult.mno}`; // 로그인 페이지로 redirect 연동 후 로그인 처리
             }
-          }else{
-            // 자체 JWT 발행
-            const userResult = await getUserByEmail(profile.response.email);
-            if(userResult?.social !== 'naver'){
-              
-              return `/authentication/login?${userResult?.social}`;
-            }
-            const mno = Number(userResult?.mno);
             
+          }else{ // 네이버 회원이거나 네이버 연동을 한 일반회원
+            // 네이버 로그인 실행
+            // 자체 JWT 발행
+            const userResult = await getUserBySocialID('naver', user.id);
+            const naverEmail = profile.response.email;
+            const naverName = profile.response.name;
+            const naverPhone = profile.response.mobile;
+
+            const requestBody = {
+              mno: userResult?.mno,
+              email: naverEmail,
+              name: naverName,
+              phone: naverPhone,
+            }
+
+            if(userResult?.provider === 'kakao'){
+              
+              return `/authentication/login?provider=${userResult?.provider}`;
+            }
+
+            if(userResult?.provider !== 'credentials'){ // 소셜가입자만 정보변경
+              if(userResult?.social?.naver_Id === user.id && (userResult.email !== naverEmail || userResult.name !== naverName || userResult.phone !== naverPhone)){
+                // 네이버에서 정보 변경한 경우 DB 업데이트 진행 후 로그인
+                console.log("네이버에서 정보변경함");
+                updateUserByMno(requestBody); // 정보수정
+              }
+            }
+            
+            const mno = Number(userResult?.mno);
             const accessToken = signJwtAccessToken({mno: mno});
             const refreshToken = createRefreshToken({mno: mno});
             const rt_ex = jwtDecode(refreshToken).exp;
