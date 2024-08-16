@@ -15,6 +15,8 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
+import useIntegrateSocial from "../hooks/account/useIntegrateSocial";
+
 
 interface loginType {
   title?: string;
@@ -30,37 +32,67 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const [showAlert, setShowAlert] = useState(false);
   const [message, setMessage] = useState('');
 
+  const {updateSocialID} = useIntegrateSocial();
+
   useEffect(() => {
-      if (searchParams.has('naver')) {
-          setMessage('네이버로 등록된 회원입니다.');
-          setShowAlert(true);
-      } else if (searchParams.has('kakao')) {
-          setMessage('카카오로 등록된 회원입니다.');
-          setShowAlert(true);
+    if(!showAlert){
+
+      // 미들웨어 설정
+      if (searchParams.get('isLogin') === 'false'){
+        setMessage('로그인이 필요한 페이지입니다.');
+        setShowAlert(true);
       }
-      
+
+      // 소셜회원 확인
+      if (searchParams.has('provider', 'naver')) {
+        setMessage('네이버로 등록된 회원입니다.');
+        setShowAlert(true);
+      } else if (searchParams.has('provider', 'kakao')) {
+        setMessage('카카오로 등록된 회원입니다.');
+        setShowAlert(true);
+      }
+
+      //  일반회원의 소셜연동 
+      if (searchParams.has('social')) { 
+        const integrateMsg = confirm('일반 회원가입된 유저입니다. 소셜계정을 연동하시겠습니까?');
+        const socialId = searchParams.get("social_id");
+        const mno = searchParams.get("mno");
+        const social = searchParams.get('social');
+
+        if (integrateMsg) {
+          console.log("연동실행");
+          updateSocialID(social, socialId, mno);
+        } else {
+          return;
+        }
+      }
+
+      // 로그인 실패
+      if(searchParams.has('error')){
+        alert('일치하는 정보가 없습니다.');
+      }
+
+    }
   }, [searchParams]);
 
+  // 알럿창 끄기
   const handleClose = () => {
     setShowAlert(false);
   };
 
+  // 로그인 메서드
   const handleLogin = async () => {
-    
-      const response = await signIn("credentials", {
+      await signIn("credentials", {
         email: email,
         password: password,
       });
+  };
 
-      if(!response){
-        console.log("로그인 요청 실패");
-        return null;
-      }else if(response.error){
-        alert('정보가 일치하지 않습니다.');
-        return;
-      }else{
-        console.log("로그인 성공");
-      }
+  // 엔터키
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
   };
   
   return(
@@ -74,6 +106,33 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     {subtext}
 
     <Stack>
+      {showAlert && searchParams.has('isLogin') && (
+        <Alert 
+            severity="info" 
+            onClose={handleClose} 
+            sx={{
+              width: '80%',
+              maxWidth: '600px',
+              height: '70px',
+              fontSize: 'large',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              lineHeight: '70px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: '#ebebeb',
+              position: 'fixed',
+              top: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1000,
+              boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+            }}
+        >
+            {message}
+        </Alert>
+      )}
       <Box>
         <Typography
           variant="subtitle1"
@@ -84,7 +143,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         >
           Email
         </Typography>
-        <CustomTextField id="email" variant="outlined" fullWidth value={email} onChange={(e) => setEmail(e.target.value)}/>
+        <CustomTextField id="email" variant="outlined" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyPress}/>
       </Box>
       <Box mt="25px">
         <Typography
@@ -96,7 +155,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         >
           Password
         </Typography>
-        <CustomTextField id="password" type="password" variant="outlined" fullWidth value={password} onChange={(e) => setPassword(e.target.value)}/>
+        <CustomTextField id="password" type="password" variant="outlined" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyPress}/>
       </Box>
       <Stack
         justifyContent="space-between"
@@ -130,16 +189,20 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
       </Button>
     </Box>
     <Box position="relative" mt={3} pt={3} borderTop="1px solid #b4b4b4">
-            {showAlert && (
+            {showAlert && searchParams.has('provider') && (
                 <Alert 
                     severity="info" 
                     onClose={handleClose} 
                     sx={{
-                        position: 'absolute', 
-                        top: -60, // 이미지 위에 위치하도록 조정
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        zIndex: 1,
+                      width: '320px',
+                      backgroundColor: '#ebebeb',
+                      fontSize: 'medium',
+                      fontWeight: 'bold',
+                      position: 'absolute', 
+                      top: -40, // 이미지 위에 위치하도록 조정
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      zIndex: 1,
                     }}
                 >
                     {message}

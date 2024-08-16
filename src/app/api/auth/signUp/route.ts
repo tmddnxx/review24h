@@ -21,7 +21,8 @@ export async function POST(req: NextRequest){
         body.password = '1111';
         body.name = oauth.name;
         body.phone = oauth.phone;
-        body.social = oauth.social;
+        body.provider = oauth.provider;
+        body.socialID = oauth.socialID;
     }
 
     

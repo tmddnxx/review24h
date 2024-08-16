@@ -7,8 +7,9 @@ import redis from "../../../../../redis/redis";
 
 
 export async function POST(req:NextRequest) {
-    const {accessToken} = await req.json();
-    
+    const accessToken = req.headers.get('authorization');
+    console.log("header accessToken ? ",accessToken);
+
     if(!accessToken){
         // 엑세스토큰이 제공되지 않은 경우
         return new NextResponse(JSON.stringify({message: "엑세스토큰이 제공되지 않았습니다."}),{status : 400})
@@ -53,7 +54,7 @@ export async function POST(req:NextRequest) {
         return new NextResponse(JSON.stringify({message: "블랙리스트에 등록된 토큰입니다."}),{status: 403})
     }
 
-    const at_mno = jwtDecode(accessToken).mno;
+    const at_mno = Number(jwtDecode(accessToken).mno);
     const rt_mno = jwtDecode(refreshTokenString).mno;
 
     const redisRT = await redis.get(`refreshToken:mno:${rt_mno}`);
@@ -72,7 +73,9 @@ export async function POST(req:NextRequest) {
     
     
     const user = await getUserByMno(decodeRedisRT.mno);
-    const newAccessToken = signJwtAccessToken({mno: user.mno});
+    const mno = Number(user?.mno);
+    const newAccessToken = signJwtAccessToken({mno: mno});
+    console.log("new AT ? " , newAccessToken);
 
     return NextResponse.json({accessToken: newAccessToken})
 }
