@@ -14,3 +14,19 @@ export async function getBaminUserByID(baminID:string){
 
     return null;
 }
+
+export async function getBaminUserByMno(mno:number){
+
+    const bamin_account = await prisma.bamin_account.findUnique({
+        where: {
+            mno: mno,
+        }
+    })
+
+    if(!bamin_account){ // // 없으면 null 반환
+        return null;
+    }
+
+    
+    return bamin_account;
+}
