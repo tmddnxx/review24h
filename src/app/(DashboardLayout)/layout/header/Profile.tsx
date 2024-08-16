@@ -69,7 +69,7 @@ const Profile = () => {
           </ListItemIcon>
           <ListItemText>My Profile</ListItemText>
         </MenuItem>
-        <MenuItem>
+        <MenuItem component={Link} href="/authentication/account">
           <ListItemIcon>
             <IconMail width={20} />
           </ListItemIcon>
