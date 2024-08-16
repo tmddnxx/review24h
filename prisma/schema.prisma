@@ -9,17 +9,28 @@ datasource db {
 
 model user {
   mno      BigInt  @id @default(autoincrement())
-  email    String  @db.VarChar(255) @unique
+  email    String  @unique @db.VarChar(255)
   password String  @db.VarChar(255)
   name     String  @db.VarChar(255)
-  phone    String  @db.VarChar(255) @unique
-  social   String? @default("credentials") @db.VarChar(255)
+  phone    String  @unique @db.VarChar(255)
+  provider String? @default("credentials") @db.VarChar(255)
+
+  bamin_account bamin_account?
+  social social?
 }
 
 model bamin_account {
   mno     BigInt @id
-  baminID String @default("") @db.VarChar(50) @unique
+  baminID String @unique @default("") @db.VarChar(255)
   baminPW String @default("") @db.VarChar(255)
+
+  user user @relation(fields: [mno], references: [mno], onDelete: Cascade, onUpdate: Cascade)
 }
 
+model social {
+  mno BigInt @id
+  kakao_Id String @db.VarChar(255) @default("")
+  naver_Id String @db.VarChar(255) @default("")
 
+  user user @relation(fields: [mno], references: [mno], onDelete: Cascade, onUpdate: Cascade)
+}
