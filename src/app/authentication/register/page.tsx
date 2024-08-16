@@ -28,7 +28,7 @@ export default function Register() {
     baminID: '',
     baminPW: '',
     validBaminPw: '',
-    social: 'credentials',
+    provider: 'credentials',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
