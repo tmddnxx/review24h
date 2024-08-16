@@ -1,7 +1,18 @@
-const Loading = () =>{
-    return(
-        <div>Dash Loading</div>
-    )
-}
+import React from 'react';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
-export default Loading;
+const LoadingSpinner = () => (
+    <Box
+        sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+        }}
+    >
+        <CircularProgress />
+    </Box>
+);
+
+export default LoadingSpinner;
