@@ -207,3 +207,16 @@ export async function updateSocialID(mno:number, social:string, socialID: string
           },
       });
 }
+
+// 회원 비밀번호 변경
+export async function changePasswordByMno(body:any){
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+    await prisma.user.update({
+        where: {
+            mno: body.mno,
+        },
+        data: {
+            password: hashedPassword,
+        }
+    })
+}

@@ -1,11 +1,12 @@
 import RegisterFormProps from "@/app/(DashboardLayout)/components/forms/theme-elements/RegisterFormProps";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const usePass = (handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void, formdata: RegisterFormProps['formData']) => {
     const [passErrMsg, setPassErrMsg] = useState(''); // 비밀번호 오류메시지
     const [validPassErrMsg, setValidPassErrMsg] = useState(''); // 비밀번호 확인란 오류메시지
-    const [isPassVaild, setIsPassValid] = useState(false); // 비밀번호 검증 통과여부
-
+    const [isPassValid, setIsPassValid] = useState(false); // 비밀번호 검증 통과여부
+    const [isPassFormatValid, setIsPassFormatValid] = useState(false); // 비밀번호 형식 유효성
+    const [isPassMatch, setIsPassMatch] = useState(false); // 비밀번호 일치 여부
     
     // 비밀번호 변경감지
     const passChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,12 +19,11 @@ const usePass = (handleChange: (event: React.ChangeEvent<HTMLInputElement>) => v
         });
         if(!formatPassCheck(value)){
             setPassErrMsg('비밀번호는 8자 이상 영어,숫자,특수문자를 모두 포함하셔야합니다.');
-            setIsPassValid(false); // 유효성검사 논패스
+            setIsPassFormatValid(false); // 형식 미통과
         }else{
             setPassErrMsg('');
-            setIsPassValid(true); // 유효성검사 패스
+            setIsPassFormatValid(true); // 형식 통과
         }
-
     }
 
     // 비밀번호 확인란 변경 감지
@@ -39,11 +39,11 @@ const usePass = (handleChange: (event: React.ChangeEvent<HTMLInputElement>) => v
         });
         if(!formatPassCheck(value)){
             setValidPassErrMsg('비밀번호는 8자 이상 영어,숫자,특수문자를 모두 포함하셔야합니다.');
-            setIsPassValid(false); // 유효성검사 논패스
-            return;
+            setIsPassFormatValid(false); // 형식 미통과
+           
         }else{
             setValidPassErrMsg('');
-            setIsPassValid(true); // 유효성검사 패스
+            setIsPassFormatValid(true); // 형식 통과
         }
         checkPassMatch(password, value); // 비밀번호 일치확인
 
@@ -60,12 +60,23 @@ const usePass = (handleChange: (event: React.ChangeEvent<HTMLInputElement>) => v
     function checkPassMatch(pass:string, validPass:string){
         if(pass !== validPass){
             setValidPassErrMsg('비밀번호가 일치하지 않습니다.')
-            setIsPassValid(false); // 유효성검사 논패스
+            setIsPassMatch(false); // 비밀번호가 일치하지 않으면 false
         }else{
             setValidPassErrMsg('');
-            setIsPassValid(true); // 유효성검사 패스
+            setIsPassMatch(true); // 비밀번호가 일치하지 않으면 true
         }
     }
+
+    // 유효성 검사 통과 여부
+    useEffect(() => {
+        // 비밀번호 형식이 맞고, 두 비밀번호가 일치할 때만 isPassValid를 true로 설정
+        if (isPassFormatValid && isPassMatch) {
+            setIsPassValid(true);
+        } else {
+            setIsPassValid(false);
+        }
+    }, 
+    [isPassFormatValid, isPassMatch]); // 형식 유효성 및 비밀번호 일치 여부가 변경될 때마다 검사
 
 
 
@@ -74,7 +85,7 @@ const usePass = (handleChange: (event: React.ChangeEvent<HTMLInputElement>) => v
         validPassChange,
         passErrMsg,
         validPassErrMsg,
-        isPassVaild,
+        isPassValid,
     }
 }
 
