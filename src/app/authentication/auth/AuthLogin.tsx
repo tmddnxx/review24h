@@ -16,6 +16,8 @@ import Link from "next/link";
 import Image from "next/image";
 import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
 import useIntegrateSocial from "../hooks/account/useIntegrateSocial";
+import CustomPasswordField from "@/app/(DashboardLayout)/components/forms/theme-elements/PasswordVisibleIcon";
+import PasswordVisibleIcon from "@/app/(DashboardLayout)/components/forms/theme-elements/PasswordVisibleIcon";
 
 
 interface loginType {
@@ -31,6 +33,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
   const searchParams = useSearchParams();
   const [showAlert, setShowAlert] = useState(false);
   const [message, setMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // 비밀번호 보여주기 
 
   const {updateSocialID} = useIntegrateSocial();
 
@@ -95,6 +98,12 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     }
   };
   
+  // 비밀번호 보여주기 토글
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+
   return(
   <>
     {title ? (
@@ -155,7 +164,15 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
         >
           Password
         </Typography>
-        <CustomTextField id="password" type="password" variant="outlined" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyPress}/>
+        <CustomTextField id="password" type={showPassword ? 'text' : 'password'} variant="outlined" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyPress}
+          InputProps={{
+            endAdornment: (
+              <PasswordVisibleIcon
+              showPassword={showPassword}
+              onToggle={togglePasswordVisibility}
+              />
+            )
+          }}/>
       </Box>
       <Stack
         justifyContent="space-between"

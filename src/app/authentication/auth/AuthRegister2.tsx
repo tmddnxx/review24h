@@ -7,10 +7,13 @@ import useEmail from '../hooks/step2/useEmail';
 import usePhone from '../hooks/step2/usePhone';
 import usePass from '../hooks/step2/usePass';
 import useName from '../hooks/step2/useName';
+import PasswordVisibleIcon from '@/app/(DashboardLayout)/components/forms/theme-elements/PasswordVisibleIcon';
 
 
 const AuthRegister2 = ({subtitle, subtext, handleNext, handleChange, handlePrev, formData }: RegisterFormProps) => {
-       
+    const [showPassword, setShowPassword] = useState(false); // 비밀번호 보여주기 
+    const [showValidPassword, setValidShowPassword] = useState(false); // 비밀번호확인 보여주기 
+
     const {
         isDuplicateChecked,
         isSendEmail,
@@ -41,7 +44,16 @@ const AuthRegister2 = ({subtitle, subtext, handleNext, handleChange, handlePrev,
 
     const {phone, handlePhoneChange} = usePhone(handleChange); // 휴대폰 관련 커스텀 훅 
 
-    
+     // 비밀번호 보여주기 토글
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+    // 비밀번호확인 보여주기 토글
+    const toggleValidPasswordVisibility = () => {
+        setValidShowPassword(!showValidPassword);
+    };
+
+
     return (
     <>
         {subtext}
@@ -82,12 +94,30 @@ const AuthRegister2 = ({subtitle, subtext, handleNext, handleChange, handlePrev,
 
                 <Typography variant="subtitle1"
                     fontWeight={600} component="label" htmlFor='password' mb="5px" mt="25px">비밀번호</Typography>
-                <CustomTextField id="password" type="password" variant="outlined" fullWidth onChange={passChange} placeholder="비밀번호는 8자 이상 영어,숫자,특수문자를 모두 포함하셔야합니다."/>
+                <CustomTextField id="password" type={showPassword ? 'text' : 'password'} variant="outlined" fullWidth onChange={passChange} placeholder="비밀번호는 8자 이상 영어,숫자,특수문자를 모두 포함하셔야합니다."
+                    InputProps={{
+                        endAdornment: (
+                            <PasswordVisibleIcon
+                                showPassword={showPassword}
+                                onToggle={togglePasswordVisibility}
+                            />
+                        )
+                    }}
+                />
                 <Typography variant='caption' color="red">{passErrMsg}</Typography>
 
                 <Typography variant="subtitle1"
                     fontWeight={600} component="label" htmlFor='validPassword' mb="5px" mt="25px">비밀번호 확인</Typography>
-                <CustomTextField id="validPassword" type="password" variant="outlined" fullWidth onChange={validPassChange} placeholder="비밀번호는 8자 이상 영어,숫자,특수문자를 모두 포함하셔야합니다."/>
+                <CustomTextField id="validPassword" type={showValidPassword ? 'text' : 'password'} variant="outlined" fullWidth onChange={validPassChange} placeholder="비밀번호는 8자 이상 영어,숫자,특수문자를 모두 포함하셔야합니다."
+                    InputProps={{
+                        endAdornment: (
+                            <PasswordVisibleIcon
+                                showPassword={showValidPassword}
+                                onToggle={toggleValidPasswordVisibility}
+                            />
+                        )
+                    }}
+                />
                 <Typography variant='caption' color="red">{validPassErrMsg}</Typography>
 
                 <Typography variant="subtitle1"
