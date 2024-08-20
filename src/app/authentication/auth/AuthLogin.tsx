@@ -16,7 +16,6 @@ import Link from "next/link";
 import Image from "next/image";
 import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
 import useIntegrateSocial from "../hooks/account/useIntegrateSocial";
-import CustomPasswordField from "@/app/(DashboardLayout)/components/forms/theme-elements/PasswordVisibleIcon";
 import PasswordVisibleIcon from "@/app/(DashboardLayout)/components/forms/theme-elements/PasswordVisibleIcon";
 
 
@@ -175,14 +174,14 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
           }}/>
       </Box>
       <Stack
-        justifyContent="space-between"
+        justifyContent="center"
         direction="row"
         alignItems="center"
         my={2}
       >
         <Typography
           component={Link}
-          href="/"
+          href="/authentication/account/find"
           fontWeight="500"
           sx={{
             textDecoration: "none",
