@@ -1,9 +1,11 @@
 import RegisterFormProps from "@/app/(DashboardLayout)/components/forms/theme-elements/RegisterFormProps";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const useBaminPW = (handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void, formdata: RegisterFormProps['formData']) => {
     const [baminPWErrMsg, setBaminPWErrMsg] = useState(''); // 비밀번호 오류메시지
     const [validBaminPWErrMsg, setValidBaminPWErrMsg] = useState(''); // 비밀번호 확인란 오류메시지
+    const [isBaminPWFormatValid, setIsBaminPWFormatValid] = useState(false); // 형식 검증 통과여부
+    const [isBaminPWMatch, setIsBaminPWMatch] = useState(false); // 비밀번호 일치 검증 확인
     const [isBaminPWValid, setIsBaminPWValid] = useState(false); // 비밀번호 검증 통과여부
 
     // 배민 비밀번호 변경감지
@@ -18,10 +20,10 @@ const useBaminPW = (handleChange: (event: React.ChangeEvent<HTMLInputElement>) =
 
         if(!formatBaminPWCheck(value)){
             setBaminPWErrMsg('비밀번호는 영문+숫자 10자 이상 또는 영문+숫자+특수기호 8자 이상이어야 합니다.');
-            setIsBaminPWValid(false); // 검증 논패스
+            setIsBaminPWFormatValid(false); // 형식 미통과
         }else{
             setBaminPWErrMsg('');
-            setIsBaminPWValid(true); // 검증 패스
+            setIsBaminPWFormatValid(true); // 형식통과
         }
 
     }
@@ -40,10 +42,10 @@ const useBaminPW = (handleChange: (event: React.ChangeEvent<HTMLInputElement>) =
 
         if(!formatBaminPWCheck(value)){
             setValidBaminPWErrMsg('비밀번호는 영문+숫자 10자 이상 또는 영문+숫자+특수기호 8자 이상이어야 합니다.');
-            setIsBaminPWValid(false); // 검증 논패스
+            setIsBaminPWFormatValid(false); // 형식 미통과
         }else{
             setValidBaminPWErrMsg('');
-            setIsBaminPWValid(true); // 검증 패스
+            setIsBaminPWFormatValid(true); // 형식통과
         }
 
         checkBaminPWMatch(baminPW, value); // 비밀번호 일치확인
@@ -59,12 +61,23 @@ const useBaminPW = (handleChange: (event: React.ChangeEvent<HTMLInputElement>) =
     function checkBaminPWMatch(pass:string, validPass:string){
         if(pass !== validPass){
             setValidBaminPWErrMsg('비밀번호가 일치하지 않습니다.');
-            setIsBaminPWValid(false); // 검증 논패스
+            setIsBaminPWMatch(false); // 검증 논패스
         }else{
             setValidBaminPWErrMsg('');
-            setIsBaminPWValid(true); // 검증 패스
+            setIsBaminPWMatch(true); // 검증 패스
         }
     }
+
+    useEffect(() => {
+        // 비밀번호 형식이 올바르고, 비밀번호가 일치하면 true
+        if(isBaminPWFormatValid && isBaminPWMatch){
+            setIsBaminPWValid(true);
+        }else{
+            setIsBaminPWValid(false);
+        }
+    },
+    [isBaminPWFormatValid, isBaminPWMatch]);
+
 
 
     return {
