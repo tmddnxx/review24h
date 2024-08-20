@@ -32,7 +32,7 @@ const AuthRegister2 = ({subtitle, subtext, handleNext, handleChange, handlePrev,
         validPassChange,
         passErrMsg,
         validPassErrMsg,
-        isPassVaild, // 비밀번호 검사 패스/논패스
+        isPassValid, // 비밀번호 검사 패스/논패스
     } = usePass(handleChange, formData) // 패스워드 관련 커스텀 훅
 
     const {
@@ -140,7 +140,7 @@ const AuthRegister2 = ({subtitle, subtext, handleNext, handleChange, handlePrev,
                 <Button color="error" variant="contained" size="large" fullWidth onClick={handlePrev}>
                     이전
                 </Button>
-                <Button color="primary" variant="contained" size="large" fullWidth onClick={handleNext} disabled={!(isDuplicateChecked && isConfirmCode && isPassVaild && isNameValid)}>
+                <Button color="primary" variant="contained" size="large" fullWidth onClick={handleNext} disabled={!(isDuplicateChecked && isConfirmCode && isPassValid && isNameValid)}>
                     다음
                 </Button>
                 {/* <Button color="primary" variant="contained" size="large" fullWidth onClick={handleNext}>
