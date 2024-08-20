@@ -7,7 +7,7 @@ import CryptoJS from "crypto-js";
 export async function signUp(body:any){
     try {
         const hashedPW = await bcrypt.hash(body.password, 10); // 10 => 해시반복횟수
-        const hashedBID = CryptoJS.AES.encrypt(body.baminID, process.env.NEXTAUTH_SECRET).toString()
+        const encryptBID = CryptoJS.AES.encrypt(body.baminID, process.env.NEXTAUTH_SECRET).toString()
         const hashedBPW = await bcrypt.hash(body.baminPW, 10); // 10 => 해시반복횟수
         
         const result = await prisma.$transaction(async (prisma) => {
@@ -24,7 +24,7 @@ export async function signUp(body:any){
             const baminAccount = await prisma.bamin_account.create({
                 data: {
                     mno: user.mno,
-                    baminID: hashedBID,
+                    baminID: encryptBID,
                     baminPW: hashedBPW,
                 }
             });
@@ -219,4 +219,50 @@ export async function changePasswordByMno(body:any){
             password: hashedPassword,
         }
     })
+}
+
+// 전화번호 + 이름으로 아이디 찾기
+export async function findUserByNameAndPhone(body:any) {
+    
+    const user = await prisma.user.findFirst({
+        where: {
+            name: body.name,
+            phone: body.phone,
+        }
+    });
+
+    if(!user){
+        return null
+    }
+
+    const result = {
+        email : user.email,
+        provider : user.provider,
+    }
+    
+    return result;
+}
+
+// 이메일 + 전화번호 + 이름으로 비밀번호 찾기
+export async function findUserByEmailAndNameAndPhone(body:any) {
+    
+    const user = await prisma.user.findFirst({
+        where: {
+            email: body.email,
+            name: body.name,
+            phone: body.phone,
+        }
+    });
+
+    if(!user){
+        return null
+    }
+
+    const result = {
+        mno: user.mno,
+        email : user.email,
+        provider : user.provider,
+    }
+    
+    return result;
 }
