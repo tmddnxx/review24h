@@ -9,22 +9,31 @@ import { useState } from 'react';
 import PasswordVisibleIcon from '@/app/(DashboardLayout)/components/forms/theme-elements/PasswordVisibleIcon';
 import usePass from '../hooks/step2/usePass';
 import RegisterFormProps from '@/app/(DashboardLayout)/components/forms/theme-elements/RegisterFormProps';
+import useBaminID from '../hooks/step3/useBaminID';
+import useBaminPW from '../hooks/step3/useBaminPW';
 
 
 // 계정 정보 
 export default function MyAccount() {
 
   const [showPassword, setShowPassword] = useState(false); // 비밀번호 보여주기 
-  const [showValidPassword, setValidShowPassword] = useState(false); // 비밀번호확인 보여주기 
+  const [showValidPassword, setValidShowPassword] = useState(false); // 비밀번호확인 보여주기
+  const [showBaminPassword, setShowBaminPassword] = useState(false); // 배민 비밀번호 보여주기 
+  const [showBaminValidPassword, setShowBaminValidPassword] = useState(false); // 배민 비밀번호확인 보여주기 
+  
+
   const [formData, setFormData] = useState({
     password: '',
     validPassword: '',
+    baminID: '',
+    baminPW: '',
+    validBaminPW: '',
   });
 
   // 마스킹 함수
   function maskEmail(email:string) {
       const [user, domain] = email.split('@');
-      const maskedUser = user[0] + '*'.repeat(user.length-1);
+      const maskedUser = user[0]+user[1]+user[2] + '*'.repeat(user.length-3);
       return `${maskedUser}@${domain}`;
   }
   function maskName(name:string) {
@@ -52,7 +61,7 @@ export default function MyAccount() {
       }
   }
 
-    // 비밀번호 수정 버튼
+    // 비밀번호 수정 폼 보여주기 토글
   function changePasswodForm(){
     setIsPasswordForm(!isPasswordForm);
   }
@@ -65,6 +74,27 @@ export default function MyAccount() {
   const toggleValidPasswordVisibility = () => {
     setValidShowPassword(!showValidPassword);
   };
+
+  // 배민 아이디 수정 폼 보여주기 토글
+  function changeBaminIDForm(){
+    setisBaminIDForm(!isBaminIDForm);
+  }
+
+  // 배민 비번 수정 폼 보여주기 토글
+  function changeBaminPWForm(){
+    setisBaminPWForm(!isBaminPWForm);
+  }
+
+  // 배민 비밀번호 보여주기 토글
+  const toggleBaminPasswordVisibility = () => {
+    setShowBaminPassword(!showBaminPassword);
+  };
+  // 배민 비밀번호확인 보여주기 토글
+  const toggleBaminValidPasswordVisibility = () => {
+    setShowBaminValidPassword(!showBaminValidPassword);
+  };
+
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -80,15 +110,36 @@ export default function MyAccount() {
     passErrMsg,
     validPassErrMsg,
     isPassValid, // 비밀번호 검사 패스/논패스
-  } = usePass(handleChange, formData) // 패스워드 관련 커스텀 훅
+  } = usePass(handleChange, formData) // 패스워드 검증관련 커스텀 훅
+
+  const {
+    isBaminIDValid,
+    baminIDErrMsg,
+    baminIDChange,
+  } = useBaminID(handleChange, formData) // 배민아이디 검증관련 커스텀 훅
+
+  const {
+    baminPWChange,
+    validBaminPWChange,
+    baminPWErrMsg,
+    validBaminPWErrMsg,
+    isBaminPWValid,
+  } = useBaminPW(handleChange, formData) // 배민 비밀번호 검증관련 커스텀 훅
 
   const { 
     userData,
+    isSocial,
     isLoading,
     isPasswordForm,
+    isBaminIDForm,
+    isBaminPWForm,
+    setisBaminPWForm,
+    setisBaminIDForm,
     handleChangePassword,
     setIsPasswordForm,
-  } = useAccountData(formData); // 커스텀 훅 호출
+    handleChangeBaminID,
+    handleChangeBaminPW,
+  } = useAccountData(formData); // MyAccount 커스텀 훅 호출
 
     return (
     <RootLayout>
@@ -141,7 +192,9 @@ export default function MyAccount() {
                     value={"**************"}
                     inputProps={{ readOnly: true }}
                     />
-                    <Button variant='contained' size='medium' sx={{height:'50px', marginTop: 1}} onClick={changePasswodForm}>수정</Button>
+                    {!isSocial && (
+                      <Button variant='contained' size='medium' sx={{height:'50px', marginTop: 1}} onClick={changePasswodForm}>수정</Button>
+                    )}
                   </Box>
                   
                   {isPasswordForm && (
@@ -181,34 +234,84 @@ export default function MyAccount() {
                 </Grid>
                 <Grid item xs={12} lg={4}>
                 <Paper elevation={3} sx={{ p: 3, height: '100%' }}>
-                    <Typography variant="h6" gutterBottom>
-                    배달의 민족 정보
-                    </Typography>
+                  <Typography variant="h6" gutterBottom>
+                  배달의 민족 정보
+                  </Typography>
 
-                    <Box sx={{display: 'flex', gap: 3, justifyContent: 'center', alignItems: 'center'}}>
-                      <CustomTextField
-                      fullWidth
-                      label="배민비즈 아이디"
-                      variant="outlined"
-                      margin="normal"
-                      value={maskId(userData.baminID)}
-                      inputProps={{ readOnly: true }}
-                      />
-                      <Button variant='contained' size='medium' sx={{height:'50px', marginTop: 1}}>수정</Button>
-                    </Box>
+                  <Box sx={{display: 'flex', gap: 3, justifyContent: 'center', alignItems: 'center'}}>
+                    <CustomTextField
+                    fullWidth
+                    label="배민비즈 아이디"
+                    variant="outlined"
+                    margin="normal"
+                    value={maskId(userData.baminID)}
+                    inputProps={{ readOnly: true }}
+                    />
+                    {!isSocial && (
+                      <Button variant='contained' size='medium' sx={{height:'50px', marginTop: 1}} onClick={changeBaminIDForm}>수정</Button>
+                    )}
+                  </Box>
 
-                    <Box sx={{display: 'flex', gap: 3, justifyContent: 'center', alignItems: 'center'}}>
-                      <CustomTextField
-                      fullWidth
-                      label="배민비즈 비밀번호"
-                      variant="outlined"
-                      margin="normal"
-                      type="password"
-                      value={"**************"}
-                      inputProps={{ readOnly: true }}
-                      />
-                      <Button variant='contained' size='medium' sx={{height:'50px', marginTop: 1}}>수정</Button>
+                  <Box sx={{display: 'flex', gap: 3, justifyContent: 'center', alignItems: 'center'}}>
+                    <CustomTextField
+                    fullWidth
+                    label="배민비즈 비밀번호"
+                    variant="outlined"
+                    margin="normal"
+                    type="password"
+                    value={"**************"}
+                    inputProps={{ readOnly: true }}
+                    />
+                    {!isSocial && (
+                      <Button variant='contained' size='medium' sx={{height:'50px', marginTop: 1}} onClick={changeBaminPWForm}>수정</Button>
+                    )}
+                  </Box>
+
+                  {/* 배민 아이디 수정 창 */}
+                  {isBaminIDForm && (
+                    <Paper elevation={3} sx={{ p: 3, mt: 2}}>
+                    <CustomTextField id="baminID" margin="normal" label="새 배민비즈 아이디" type='text' onChange={baminIDChange} variant="outlined" fullWidth placeholder="영문 혹은 영문+숫자, 4~20자"/>
+                    <Typography variant='caption' color="red">{baminIDErrMsg}</Typography>
+                    <Box sx={{textAlign: 'right', mt:1}}>
+                      <Button variant='contained' size='medium' onClick={handleChangeBaminID} disabled={!isBaminIDValid}>확인</Button>
                     </Box>
+                  </Paper>
+                  )}
+                  
+
+                  {/* 배민 비밀번호 수정 창 */}
+                  {isBaminPWForm && (
+                    <Paper elevation={3} sx={{ p: 3, mt: 2}}>
+                    <CustomTextField id="baminPW" margin="normal" label="새 배민비즈 비밀번호" type={showBaminPassword ? 'text' : 'password'} onChange={baminPWChange} variant="outlined" fullWidth placeholder="영문+숫자 10자 이상 또는 영문+숫자+특수기호 8자 이상"
+                      InputProps={{
+                        endAdornment: (
+                          <PasswordVisibleIcon
+                          showPassword={showBaminPassword}
+                          onToggle={toggleBaminPasswordVisibility}
+                          />
+                        )
+                      }}
+                    />
+                    <Typography variant='caption' color="red">{baminPWErrMsg}</Typography>
+
+                    <CustomTextField id="validBaminPW" margin="normal" label="새 배민비즈 비밀번호 확인" type={showBaminValidPassword ? 'text' : 'password'} onChange={validBaminPWChange} variant="outlined" fullWidth placeholder="영문+숫자 10자 이상 또는 영문+숫자+특수기호 8자 이상"
+                      InputProps={{
+                        endAdornment: (
+                          <PasswordVisibleIcon
+                          showPassword={showBaminValidPassword}
+                          onToggle={toggleBaminValidPasswordVisibility}
+                          />
+                        )
+                      }}
+                    />
+                    <Typography variant='caption' color="red">{validBaminPWErrMsg}</Typography>
+
+                    <Box sx={{textAlign: 'right', mt:1}}>
+                        <Button variant='contained' size='medium' onClick={handleChangeBaminPW} disabled={!isBaminPWValid}>확인</Button>
+                    </Box>
+                  </Paper>
+                  )}
+                  
 
                 </Paper>
                 </Grid>
