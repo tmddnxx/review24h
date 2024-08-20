@@ -12,7 +12,7 @@ const AuthRegister3 = ({ subtitle, subtext, handleChange, handleNext, handlePrev
     
     const {
         baminIDChange,
-        isBaminDuplicateCheck, // 중복검사 여부 true = 통과
+        isBaminIDValid, // 중복검사 여부 true = 통과
         baminIDErrMsg,
     } = useBaminID(handleChange, formData); // 배민아이디 관련 커스텀 훅
 
@@ -22,7 +22,7 @@ const AuthRegister3 = ({ subtitle, subtext, handleChange, handleNext, handlePrev
         isBaminPWValid,
         baminPWChange,
         validBaminPWChange,
-    } = useBaminPW(handleChange, formData);
+    } = useBaminPW(handleChange, formData); // 배민비밀번호 관련 커스텀 훅
 
 
     return(
@@ -59,7 +59,7 @@ const AuthRegister3 = ({ subtitle, subtext, handleChange, handleNext, handlePrev
                 <Button color="error" variant="contained" size="large" fullWidth onClick={handlePrev}>
                     이전
                 </Button>
-                <Button color="primary" variant="contained" size="large" fullWidth onClick={handleNext} disabled={!(isBaminDuplicateCheck && isBaminPWValid)}>
+                <Button color="primary" variant="contained" size="large" fullWidth onClick={handleNext} disabled={!(isBaminIDValid && isBaminPWValid)}>
                     회원가입 완료
                 </Button>
             </Box>
